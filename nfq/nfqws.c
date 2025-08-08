@@ -134,20 +134,30 @@ static bool test_list_files()
 	struct hostlist_file *hfile;
 	struct ipset_file *ifile;
 
-	LIST_FOREACH(hfile, &params.hostlists, next)
-		if (hfile->filename && !file_open_test(hfile->filename, O_RDONLY))
-		{
-			DLOG_PERROR("file_open_test");
-			DLOG_ERR("cannot access hostlist file '%s'\n",hfile->filename);
-			return false;
-		}
-	LIST_FOREACH(ifile, &params.ipsets, next)
-		if (ifile->filename && !file_open_test(ifile->filename, O_RDONLY))
-		{
-			DLOG_PERROR("file_open_test");
-			DLOG_ERR("cannot access ipset file '%s'\n",ifile->filename);
-			return false;
-		}
+    LIST_FOREACH(hfile, &params.hostlists, next)
+    {
+        if (hfile->filename)
+        {
+            if (!file_open_test(hfile->filename, O_RDONLY))
+            {
+                DLOG_PERROR("file_open_test");
+                DLOG_ERR("cannot access hostlist file '%s'\n",hfile->filename);
+                return false;
+            }
+        }
+    }
+    LIST_FOREACH(ifile, &params.ipsets, next)
+    {
+        if (ifile->filename)
+        {
+            if (!file_open_test(ifile->filename, O_RDONLY))
+            {
+                DLOG_PERROR("file_open_test");
+                DLOG_ERR("cannot access ipset file '%s'\n",ifile->filename);
+                return false;
+            }
+        }
+    }
 	return true;
 }
 
@@ -297,8 +307,13 @@ static int nfq_main(void)
 		return 1;
 	}
 
-	if (params.droproot && !droproot(params.uid, params.user, params.gid, params.gid_count) || !dropcaps())
-		goto err;
+    if (params.droproot)
+    {
+        if (!droproot(params.uid, params.user, params.gid, params.gid_count))
+            goto err;
+    }
+    if (!dropcaps())
+        goto err;
 	print_id();
 	if (params.droproot && !test_list_files())
 		goto err;
@@ -2150,26 +2165,27 @@ int main(int argc, char **argv)
 			snprintf(params.pidfile,sizeof(params.pidfile),"%s",optarg);
 			break;
 #ifndef __CYGWIN__
-		case IDX_USER:
-		{
-			free(params.user); params.user=NULL;
-			struct passwd *pwd = getpwnam(optarg);
-			if (!pwd)
-			{
-				DLOG_ERR("non-existent username supplied\n");
-				exit_clean(1);
-			}
-			params.uid = pwd->pw_uid;
-			params.gid[0]=pwd->pw_gid;
-			params.gid_count=1;
-			if (!(params.user=strdup(optarg)))
-			{
-				DLOG_ERR("strdup: out of memory\n");
-				exit_clean(1);
-			}
-			params.droproot = true;
-			break;
-		}
+        case IDX_USER:
+        {
+            free(params.user); params.user=NULL;
+            struct passwd pwd, *ppwd = NULL; char buf[4096];
+            int gr = getpwnam_r(optarg, &pwd, buf, sizeof(buf), &ppwd);
+            if (gr != 0 || !ppwd)
+            {
+                DLOG_ERR("non-existent username supplied\n");
+                exit_clean(1);
+            }
+            params.uid = ppwd->pw_uid;
+            params.gid[0]=ppwd->pw_gid;
+            params.gid_count=1;
+            if (!(params.user=strdup(optarg)))
+            {
+                DLOG_ERR("strdup: out of memory\n");
+                exit_clean(1);
+            }
+            params.droproot = true;
+            break;
+        }
 		case IDX_UID:
 			free(params.user); params.user=NULL;
 			if (!parse_uid(optarg,&params.uid,params.gid,&params.gid_count,MAX_GIDS))
@@ -2687,11 +2703,15 @@ int main(int argc, char **argv)
 			break;
 		case IDX_HOSTLIST_DOMAINS:
 			if (bSkip) break;
-			if (!anon_hl && !(anon_hl=RegisterHostlist(dp, false, NULL)))
-			{
-				DLOG_ERR("failed to register anonymous hostlist\n");
-				exit_clean(1);
-			}
+            if (!anon_hl)
+            {
+                anon_hl = RegisterHostlist(dp, false, NULL);
+                if (!anon_hl)
+                {
+                    DLOG_ERR("failed to register anonymous hostlist\n");
+                    exit_clean(1);
+                }
+            }
 			if (!parse_domain_list(optarg, &anon_hl->hostlist))
 			{
 				DLOG_ERR("failed to add domains to anonymous hostlist\n");
@@ -2708,11 +2728,15 @@ int main(int argc, char **argv)
 			break;
 		case IDX_HOSTLIST_EXCLUDE_DOMAINS:
 			if (bSkip) break;
-			if (!anon_hl_exclude && !(anon_hl_exclude=RegisterHostlist(dp, true, NULL)))
-			{
-				DLOG_ERR("failed to register anonymous hostlist\n");
-				exit_clean(1);
-			}
+            if (!anon_hl_exclude)
+            {
+                anon_hl_exclude = RegisterHostlist(dp, true, NULL);
+                if (!anon_hl_exclude)
+                {
+                    DLOG_ERR("failed to register anonymous hostlist\n");
+                    exit_clean(1);
+                }
+            }
 			if (!parse_domain_list(optarg, &anon_hl_exclude->hostlist))
 			{
 				DLOG_ERR("failed to add domains to anonymous hostlist\n");
@@ -2865,11 +2889,15 @@ int main(int argc, char **argv)
 			break;
 		case IDX_IPSET_IP:
 			if (bSkip) break;
-			if (!anon_ips && !(anon_ips=RegisterIpset(dp, false, NULL)))
-			{
-				DLOG_ERR("failed to register anonymous ipset\n");
-				exit_clean(1);
-			}
+            if (!anon_ips)
+            {
+                anon_ips = RegisterIpset(dp, false, NULL);
+                if (!anon_ips)
+                {
+                    DLOG_ERR("failed to register anonymous ipset\n");
+                    exit_clean(1);
+                }
+            }
 			if (!parse_ip_list(optarg, &anon_ips->ipset))
 			{
 				DLOG_ERR("failed to add subnets to anonymous ipset\n");
@@ -2886,11 +2914,15 @@ int main(int argc, char **argv)
 			break;
 		case IDX_IPSET_EXCLUDE_IP:
 			if (bSkip) break;
-			if (!anon_ips_exclude && !(anon_ips_exclude=RegisterIpset(dp, true, NULL)))
-			{
-				DLOG_ERR("failed to register anonymous ipset\n");
-				exit_clean(1);
-			}
+            if (!anon_ips_exclude)
+            {
+                anon_ips_exclude = RegisterIpset(dp, true, NULL);
+                if (!anon_ips_exclude)
+                {
+                    DLOG_ERR("failed to register anonymous ipset\n");
+                    exit_clean(1);
+                }
+            }
 			if (!parse_ip_list(optarg, &anon_ips_exclude->ipset))
 			{
 				DLOG_ERR("failed to add subnets to anonymous ipset\n");

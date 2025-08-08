@@ -24,7 +24,7 @@ void qsort_size_t(size_t *array,size_t ct);
 
 void rtrim(char *s);
 void replace_char(char *s, char from, char to);
-char *strncasestr(const char *s,const char *find, size_t slen);
+const char *strncasestr(const char *s,const char *find, size_t slen);
 
 bool load_file(const char *filename,void *buffer,size_t *buffer_size);
 bool load_file_nonempty(const char *filename,void *buffer,size_t *buffer_size);

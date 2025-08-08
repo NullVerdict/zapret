@@ -962,26 +962,27 @@ void parse_params(int argc, char *argv[])
 		case IDX_DAEMON:
 			params.daemon = true;
 			break;
-		case IDX_USER:
-		{
-			free(params.user); params.user=NULL;
-			struct passwd *pwd = getpwnam(optarg);
-			if (!pwd)
-			{
-				DLOG_ERR("non-existent username supplied\n");
-				exit_clean(1);
-			}
-			params.uid = pwd->pw_uid;
-			params.gid[0]=pwd->pw_gid;
-			params.gid_count=1;
-			if (!(params.user=strdup(optarg)))
-			{
-				DLOG_ERR("strdup: out of memory\n");
-				exit_clean(1);
-			}
-			params.droproot = true;
-			break;
-		}
+        case IDX_USER:
+        {
+            free(params.user); params.user=NULL;
+            struct passwd pwd, *ppwd = NULL; char buf[4096];
+            int gr = getpwnam_r(optarg, &pwd, buf, sizeof(buf), &ppwd);
+            if (gr != 0 || !ppwd)
+            {
+                DLOG_ERR("non-existent username supplied\n");
+                exit_clean(1);
+            }
+            params.uid = ppwd->pw_uid;
+            params.gid[0]=ppwd->pw_gid;
+            params.gid_count=1;
+            if (!(params.user=strdup(optarg)))
+            {
+                DLOG_ERR("strdup: out of memory\n");
+                exit_clean(1);
+            }
+            params.droproot = true;
+            break;
+        }
 		case IDX_UID:
 			free(params.user); params.user=NULL;
 			if (!parse_uid(optarg,&params.uid,params.gid,&params.gid_count,MAX_GIDS))

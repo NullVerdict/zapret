@@ -98,14 +98,11 @@ int hkdfExtract(SHAversion whichSha,
 	uint8_t prk[USHAMaxHashSize])
 {
 	unsigned char nullSalt[USHAMaxHashSize];
-	if (salt == 0) {
+    if (salt == 0) {
 		salt = nullSalt;
 		salt_len = USHAHashSize(whichSha);
 		memset(nullSalt, '\0', salt_len);
-	}
-	else if (salt_len < 0) {
-		return shaBadParam;
-	}
+    }
 	return hmac(whichSha, ikm, ikm_len, salt, salt_len, prk);
 }
 
@@ -150,14 +147,11 @@ int hkdfExpand(SHAversion whichSha, const uint8_t prk[], size_t prk_len,
 	unsigned char T[USHAMaxHashSize];
 	size_t Tlen, where, i;
 
-	if (info == 0) {
+    if (info == 0) {
 		info = (const unsigned char *)"";
 		info_len = 0;
-	}
-	else if (info_len < 0) {
-		return shaBadParam;
-	}
-	if (okm_len <= 0) return shaBadParam;
+    }
+    if (okm_len == 0) return shaBadParam;
 	if (!okm) return shaBadParam;
 
 	hash_len = USHAHashSize(whichSha);

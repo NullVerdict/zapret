@@ -29,10 +29,12 @@ static int __netlink_enumerate(int fd, unsigned int seq, int type, int af,
 	r = send(fd, &u.req, sizeof(u.req), 0);
 	if (r < 0) return r;
 
-	while (1) {
-		r = recv(fd, u.buf, sizeof(u.buf), MSG_DONTWAIT);
-		if (r <= 0) return -1;
-		for (h = &u.reply; NLMSG_OK(h, (void*)&u.buf[r]); h = NLMSG_NEXT(h)) {
+    while (1) {
+        r = recv(fd, u.buf, sizeof(u.buf), MSG_DONTWAIT);
+        if (r <= 0) return -1;
+        if ((size_t)r > sizeof(u.buf)) r = (int)sizeof(u.buf);
+        void *end = (void*)((char*)u.buf + r);
+        for (h = &u.reply; NLMSG_OK(h, end); h = NLMSG_NEXT(h)) {
 			if (h->nlmsg_type == NLMSG_DONE) return 0;
 			if (h->nlmsg_type == NLMSG_ERROR) return -1;
 			ret = cb(ctx, h);

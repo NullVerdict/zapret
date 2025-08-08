@@ -902,6 +902,27 @@ static bool runtime_tls_mod(int fake_n,const struct fake_tls_mod_cache *modcache
 	return b;
 }
 
+static bool http_apply_hostnospace(uint8_t *payload, size_t len_payload, uint8_t *phost)
+{
+    uint8_t *ua = (uint8_t*)memmem(payload, len_payload, "\r\nUser-Agent: ", 14);
+    if (!ua) return false;
+    size_t off = (size_t)(ua - payload);
+    if (off + 1 > len_payload) return false;
+    uint8_t *ua_end = (uint8_t*)memmem(ua + 1, len_payload - off - 1, "\r\n", 2);
+    if (!ua_end) return false;
+    if (ua_end > phost)
+    {
+        memmove(phost + 5, phost + 6, (size_t)(ua_end - phost - 6));
+        ua_end[-1] = ' ';
+    }
+    else
+    {
+        memmove(ua_end + 1, ua_end, (size_t)(phost - ua_end + 5));
+        *ua_end = ' ';
+    }
+    return true;
+}
+
 uint8_t orig_mod(const struct desync_profile *dp, const t_ctrack *ctrack, struct dissect *dis)
 {
 	uint8_t ttl,ttl_orig;
@@ -1692,27 +1713,17 @@ static uint8_t dpi_desync_tcp_packet_play(bool replay, size_t reasm_offset, uint
 					*p = (((size_t)p) & 1) ? tolower(*p) : toupper(*p);
 				verdict=VERDICT_MODIFY;
 			}
-			uint8_t *pua;
 			if (dp->hostnospace)
 			{
-				if ((pua = (uint8_t*)memmem(dis->data_payload, dis->len_payload, "\r\nUser-Agent: ", 14)) &&
-					(pua = (uint8_t*)memmem(pua + 1, dis->len_payload - (pua - dis->data_payload) - 1, "\r\n", 2)))
+				if (http_apply_hostnospace(dis->data_payload, dis->len_payload, phost))
 				{
 					DLOG("removing space after Host: and adding it to User-Agent:\n");
-					if (pua > phost)
-					{
-						memmove(phost + 5, phost + 6, pua - phost - 6);
-						pua[-1]=' ';
-					}
-					else
-					{
-						memmove(pua + 1, pua, phost - pua + 5);
-						*pua = ' ';
-					}
 					verdict=VERDICT_MODIFY;
 				}
 				else
+				{
 					DLOG("cannot do hostnospace because valid User-Agent: not found\n");
+				}
 			}
 			else if (dp->methodeol)
 			{

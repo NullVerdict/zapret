@@ -236,7 +236,7 @@ bool HttpExtractHeader(const uint8_t *data, size_t len, const char *header, char
 {
 	const uint8_t *p, *s, *e = data + len;
 
-	p = (uint8_t*)strncasestr((char*)data, header, len);
+	p = (const uint8_t*)strncasestr((const char*)data, header, len);
 	if (!p) return false;
 	p += strlen(header);
 	while (p < e && (*p == ' ' || *p == '\t')) p++;

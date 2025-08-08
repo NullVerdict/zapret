@@ -40,9 +40,11 @@
 
 static int ucmp(const void * a, const void * b, void *arg)
 {
-	if (*(uint32_t*)a < *(uint32_t*)b)
+	const uint32_t *ua = (const uint32_t*)a;
+	const uint32_t *ub = (const uint32_t*)b;
+	if (*ua < *ub)
 		return -1;
-	else if (*(uint32_t*)a > *(uint32_t*)b)
+	else if (*ua > *ub)
 		return 1;
 	else
 		return 0;
@@ -83,11 +85,11 @@ static int cmp6(const void * a, const void * b, void *arg)
 
 	uint64_t aa,bb;
 #if __BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__
-	aa = __builtin_bswap64(((uint64_t*)((struct in6_addr *)a)->s6_addr)[0]);
-	bb = __builtin_bswap64(((uint64_t*)((struct in6_addr *)b)->s6_addr)[0]);
+	aa = __builtin_bswap64(((const uint64_t*)((const struct in6_addr *)a)->s6_addr)[0]);
+	bb = __builtin_bswap64(((const uint64_t*)((const struct in6_addr *)b)->s6_addr)[0]);
 #else
-	aa = ((uint64_t*)((struct in6_addr *)a)->s6_addr)[0];
-	bb = ((uint64_t*)((struct in6_addr *)b)->s6_addr)[0];
+	aa = ((const uint64_t*)((const struct in6_addr *)a)->s6_addr)[0];
+	bb = ((const uint64_t*)((const struct in6_addr *)b)->s6_addr)[0];
 #endif
 	if (aa < bb)
 		return -1;
@@ -96,11 +98,11 @@ static int cmp6(const void * a, const void * b, void *arg)
 	else
 	{
 #if __BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__
-		aa = __builtin_bswap64(((uint64_t*)((struct in6_addr *)a)->s6_addr)[1]);
-		bb = __builtin_bswap64(((uint64_t*)((struct in6_addr *)b)->s6_addr)[1]);
+		aa = __builtin_bswap64(((const uint64_t*)((const struct in6_addr *)a)->s6_addr)[1]);
+		bb = __builtin_bswap64(((const uint64_t*)((const struct in6_addr *)b)->s6_addr)[1]);
 #else
-		aa = ((uint64_t*)((struct in6_addr *)a)->s6_addr)[1];
-		bb = ((uint64_t*)((struct in6_addr *)b)->s6_addr)[1];
+		aa = ((const uint64_t*)((const struct in6_addr *)a)->s6_addr)[1];
+		bb = ((const uint64_t*)((const struct in6_addr *)b)->s6_addr)[1];
 #endif
 		return aa < bb ? -1 : aa > bb ? 1 : 0;
 	}
@@ -109,9 +111,9 @@ static int cmp6(const void * a, const void * b, void *arg)
 	// fallback case
 	for (uint8_t i = 0; i < sizeof(((struct in6_addr *)0)->s6_addr); i++)
 	{
-		if (((struct in6_addr *)a)->s6_addr[i] < ((struct in6_addr *)b)->s6_addr[i])
+		if (((const struct in6_addr *)a)->s6_addr[i] < ((const struct in6_addr *)b)->s6_addr[i])
 			return -1;
-		else if (((struct in6_addr *)a)->s6_addr[i] > ((struct in6_addr *)b)->s6_addr[i])
+		else if (((const struct in6_addr *)a)->s6_addr[i] > ((const struct in6_addr *)b)->s6_addr[i])
 			return 1;
 	}
 	return 0;
@@ -124,7 +126,7 @@ static uint32_t unique6(struct in6_addr *pu, uint32_t ct)
 	uint32_t i, j, k;
 	for (i = j = 0; j < ct; i++)
 	{
-		for (k = j++; j < ct && !memcmp(pu + j, pu + k, sizeof(struct in6_addr)); j++);
+		for (k = j++; j < ct && !memcmp((pu + j)->s6_addr, (pu + k)->s6_addr, 16); j++);
 		pu[i] = pu[k];
 	}
 	return i;
@@ -178,14 +180,14 @@ static void ip6_and(const struct in6_addr *a, const struct in6_addr *b, struct i
 #if defined(__GNUC__) && !defined(__llvm__)
 __attribute__((optimize ("no-strict-aliasing")))
 #endif
-static void ip6_and(const struct in6_addr * restrict a, const struct in6_addr * restrict b, struct in6_addr * restrict result)
+static void ip6_and(const struct in6_addr *a, const struct in6_addr *b, struct in6_addr *result)
 {
 #ifdef __SIZEOF_INT128__
 	// gcc and clang have 128 bit int types on some 64-bit archs. take some advantage
-	*((unsigned __int128*)result->s6_addr) = *((unsigned __int128*)a->s6_addr) & *((unsigned __int128*)b->s6_addr);
+	*((unsigned __int128*)result->s6_addr) = *((const unsigned __int128*)a->s6_addr) & *((const unsigned __int128*)b->s6_addr);
 #else
-	((uint64_t*)result->s6_addr)[0] = ((uint64_t*)a->s6_addr)[0] & ((uint64_t*)b->s6_addr)[0];
-	((uint64_t*)result->s6_addr)[1] = ((uint64_t*)a->s6_addr)[1] & ((uint64_t*)b->s6_addr)[1];
+	((uint64_t*)result->s6_addr)[0] = ((const uint64_t*)a->s6_addr)[0] & ((const uint64_t*)b->s6_addr)[0];
+	((uint64_t*)result->s6_addr)[1] = ((const uint64_t*)a->s6_addr)[1] & ((const uint64_t*)b->s6_addr)[1];
 #endif
 }
 
@@ -327,7 +329,9 @@ int main(int argc, char **argv)
 		{
 			rtrim(str);
 			d = 0;
-			if ((s = strchr(str, '/')) || (s = strchr(str, '-')))
+			s = strchr(str, '/');
+			if (!s) s = strchr(str, '-');
+			if (s)
 			{
 				d = *s;
 				*s = '\0';
@@ -389,7 +393,7 @@ int main(int argc, char **argv)
 				for (p = pos + 1, ip_ct = 1; p < ipct; p++, ip_ct++)
 				{
 					ip6_and(iplist + p, mask, &ip);
-					if (memcmp(&ip_start, &ip, sizeof(ip)))
+					if (memcmp(ip_start.s6_addr, ip.s6_addr, 16))
 						break;
 				}
 				if (ip_ct == 1) break;
@@ -407,10 +411,16 @@ int main(int argc, char **argv)
 				}
 			}
 			if (zct_best)
+			{
 				// network was found
 				ip6_and(iplist + pos, mask_from_bitcount6(zct_best), &ip_start);
+			}
 			else
-				ip_start = iplist[pos], pos_end = pos + 1; // network not found, use single ip
+			{
+				// network not found, use single ip
+				ip_start = iplist[pos];
+				pos_end = pos + 1;
+			}
 			inet_ntop(AF_INET6, &ip_start, str, sizeof(str));
 			printf(zct_best ? "%s/%u\n" : "%s\n", str, 128 - zct_best);
 
@@ -496,9 +506,15 @@ int main(int argc, char **argv)
 				}
 			}
 			if (zct_best)
+			{
 				ip_start = iplist[pos] & mask_from_bitcount(zct_best);
+			}
 			else
-				ip_start = iplist[pos], pos_end = pos + 1; // network not found, use single ip
+			{
+				// network not found, use single ip
+				ip_start = iplist[pos];
+				pos_end = pos + 1;
+			}
 
 			u1 = ip_start >> 24;
 			u2 = (ip_start >> 16) & 0xFF;
