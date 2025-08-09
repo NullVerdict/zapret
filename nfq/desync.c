@@ -930,7 +930,12 @@ uint8_t orig_mod(const struct desync_profile *dp, const t_ctrack *ctrack, struct
 	ttl = (ctrack && ctrack->orig_autottl) ? ctrack->orig_autottl : dis->ip6 ? dp->orig_mod_ttl6 : dp->orig_mod_ttl;
 	if (ttl && check_orig_mod_interval(dp,ctrack))
 	{
-		ttl_orig = dis->ip ? dis->ip->ip_ttl : dis->ip6->ip6_ctlun.ip6_un1.ip6_un1_hlim;
+		if (dis->ip)
+			ttl_orig = dis->ip->ip_ttl;
+		else if (dis->ip6)
+			ttl_orig = dis->ip6->ip6_ctlun.ip6_un1.ip6_un1_hlim;
+		else
+			return false;
 		if (ttl_orig!=ttl)
 		{
 			DLOG("rewrite original packet ttl %u => %u\n",ttl_orig,ttl);

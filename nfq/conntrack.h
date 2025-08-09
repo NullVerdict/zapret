@@ -24,7 +24,7 @@
 #define HASH_NONFATAL_OOM 1
 #undef HASH_FUNCTION
 #define HASH_FUNCTION HASH_BER
-#include "uthash.h"
+#include "../shared/uthash.h"
 
 #define RETRANS_COUNTER_STOP ((uint8_t)-1)
 

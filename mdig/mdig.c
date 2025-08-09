@@ -108,12 +108,15 @@ static struct
 // get next domain. return 0 if failure
 static char interlocked_get_dom(char *dom, size_t size)
 {
-	char *s;
+	char buffer[SIZE];
+	if (!fgets(buffer, size, stdin))
+		return 0;
+	trimstr(buffer);
+
 	pthread_mutex_lock(&glob.flock);
-	s = fgets(dom, size, stdin);
+	strncpy(dom, buffer, size);
 	pthread_mutex_unlock(&glob.flock);
-	if (!s) return 0;
-	trimstr(s);
+
 	return 1;
 }
 static void interlocked_fprintf(FILE *stream, const char * format, ...)
@@ -218,7 +221,7 @@ static void *t_resolver(void *arg)
 			{
 				if ((family == AF_INET && (glob.family & FAMILY4)) || (family == AF_INET6 && (glob.family & FAMILY6)))
 				{
-					unsigned int mask;
+					unsigned int mask = 0;
 					bool mask_needed = false;
 					if (s_mask)
 					{

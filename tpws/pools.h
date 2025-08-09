@@ -11,7 +11,7 @@
 //#define HASH_BLOOM 20
 #define HASH_NONFATAL_OOM 1
 #define HASH_FUNCTION HASH_BER
-#include "../nfq/uthash.h"
+#include "../shared/uthash.h"
 
 #include "../shared/kavl.h"
 

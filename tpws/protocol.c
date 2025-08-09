@@ -122,6 +122,9 @@ static size_t HostPos(uint8_t posmarker, int16_t pos, const uint8_t *data, size_
 			else
 				offset = 0;
 			break;
+		default:
+			offset = 0;
+			break;
 	}
 	return CheckPos(sz,offset);
 }
@@ -262,7 +265,7 @@ bool HttpExtractHost(const uint8_t *data, size_t len, char *host, size_t len_hos
 // DPI redirects are global redirects to another domain
 bool HttpReplyLooksLikeDPIRedirect(const uint8_t *data, size_t len, const char *host)
 {
-	char loc[256],*redirect_host, *p;
+	char loc[256],*redirect_host, *p = NULL;
 	int code;
 	
 	if (!host || !*host) return false;

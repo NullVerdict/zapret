@@ -495,7 +495,7 @@ void tamper_out(t_ctrack *ctrack, const struct sockaddr *dest, uint8_t *segment,
 						VPRINT("+2nd TLS record: ");
 						packet_debug(segment+tpos,*size-tpos);
 						// fix split positions after tlsrec. increase split pos by tlsrec header size (5 bytes)
-						if (multisplit_pos)
+						if (multisplit_pos && multisplit_count)
 							for(i=0;i<*multisplit_count;i++)
 								if (multisplit_pos[i]>tpos) multisplit_pos[i]+=5;
 					}

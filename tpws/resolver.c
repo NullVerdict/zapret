@@ -148,12 +148,15 @@ void resolver_deinit(void)
 		resolver.bStop = true;
 
 		// wait all threads to terminate
-		for (int t = 0; t < resolver.threads; t++)
-			pthread_kill(resolver.thread[t], SIGUSR1);
-		for (int t = 0; t < resolver.threads; t++)
+		if (resolver.thread)
 		{
-			pthread_kill(resolver.thread[t], SIGUSR1);
-			pthread_join(resolver.thread[t], NULL);
+			for (int t = 0; t < resolver.threads; t++)
+				pthread_kill(resolver.thread[t], SIGUSR1);
+			for (int t = 0; t < resolver.threads; t++)
+			{
+				pthread_kill(resolver.thread[t], SIGUSR1);
+				pthread_join(resolver.thread[t], NULL);
+			}
 		}
 	
 		pthread_mutex_destroy(&resolver.resolve_list_lock);

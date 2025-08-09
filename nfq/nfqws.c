@@ -754,7 +754,7 @@ static bool parse_net32_signed(const char *opt, uint32_t *value)
 {
 	if (((opt[0]=='0' && opt[1]=='x') || (opt[0]=='-' && opt[1]=='0' && opt[2]=='x')) && sscanf(opt+2+(opt[0]=='-'), "%X", (int32_t*)value)>0)
 	{
-		if (opt[0]=='-') *value = -*value;
+		if (opt[0]=='-') *value = (uint32_t)(-(int32_t)*value);
 		return true;
 	}
 	else
@@ -816,7 +816,7 @@ static bool parse_autottl(const char *s, autottl *t, int8_t def_delta, uint8_t d
 					t->min=(uint8_t)min;
 				case 1:
 					if (delta>127) return false;
-					t->delta=(int8_t)(neg ? -delta : delta);
+					t->delta=(int8_t)(neg ? -(int)delta : (int)delta);
 					break;
 				default:
 					return false;
