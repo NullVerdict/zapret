@@ -850,14 +850,6 @@ static bool proxy_mode_connect_remote(tproxy_conn_t *conn, struct tailhead *conn
 		return false;
 	}
 
-	remote_fd = connect_remote((struct sockaddr *)&conn->dest, 0);
-	if (remote_fd < 0)
-	{
-		DLOG_ERR("socks failed to connect (0) errno=%d\n", errno);
-		socks_send_rep_errno(conn->socks_ver, conn->fd, errno);
-		return false;
-	}
-
 	if (!(conn->partner = new_conn(remote_fd, true)))
 	{
 		close(remote_fd);
@@ -870,11 +862,13 @@ static bool proxy_mode_connect_remote(tproxy_conn_t *conn, struct tailhead *conn
 	conn->partner->client = conn->client;
 	conn->partner->dest = conn->dest;
 
-	// Socket is already connected, just apply tracking info
-	if (conn->track.hostname)
-		if (!ipcache_put_hostname(conn->dest.sa_family==AF_INET ? &((struct sockaddr_in*)&conn->dest)->sin_addr : NULL, conn->dest.sa_family==AF_INET6 ? &((struct sockaddr_in6*)&conn->dest)->sin6_addr : NULL , conn->track.hostname, conn->track.hostname_is_ip))
-			DLOG_ERR("ipcache_put_hostname: out of memory");
-	apply_desync_profile(&conn->track, (struct sockaddr *)&conn->dest);
+	if (!connect_remote_conn(conn))
+	{
+		free_conn(conn->partner); conn->partner = NULL;
+		DLOG_ERR("socks failed to connect (1) errno=%d\n", errno);
+		socks_send_rep_errno(conn->socks_ver, conn->fd, errno);
+		return false;
+	}
 
 	if (!epoll_set(conn->partner, EPOLLOUT))
 	{
@@ -986,6 +980,7 @@ static bool handle_proxy_mode(tproxy_conn_t *conn, struct tailhead *conn_list)
 						((struct sockaddr_in*)&conn->dest)->sin_addr.s_addr = m->ip;
 						return proxy_mode_connect_remote(conn, conn_list);
 					}
+					break;
 				case S_WAIT_REQUEST:
 					DBGPRINT("S_WAIT_REQUEST\n");
 					{
@@ -1053,12 +1048,14 @@ static bool handle_proxy_mode(tproxy_conn_t *conn, struct tailhead *conn_list)
 									DBGPRINT("S_WAIT_RESOLVE\n");
 									return true;
 								}
+								break;
 							default:
 								return false; // should not be here. S5_REQ_CONNECT_VALID checks for valid atyp
 
 						}
 						return proxy_mode_connect_remote(conn,conn_list);
 					}
+					break;
 				case S_WAIT_RESOLVE:
 					DBGPRINT("socks received message while in S_WAIT_RESOLVE. hanging up\n");
 					break;

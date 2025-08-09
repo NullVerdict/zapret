@@ -269,7 +269,7 @@ bool HttpExtractHost(const uint8_t *data, size_t len, char *host, size_t len_hos
 // DPI redirects are global redirects to another domain
 bool HttpReplyLooksLikeDPIRedirect(const uint8_t *data, size_t len, const char *host)
 {
-	char loc[256],*redirect_host, *p = NULL;
+	char loc[256],*redirect_host, *p;
 	int code;
 	
 	if (!host || !*host) return false;
@@ -595,7 +595,7 @@ static uint8_t tvb_get_varint(const uint8_t *tvb, uint64_t *value)
 		return 8;
 	}
 	// impossible case
-	if (value) *value = 0;
+	if (*value) *value = 0;
 	return 0;
 }
 static uint8_t tvb_get_size(uint8_t tvb)

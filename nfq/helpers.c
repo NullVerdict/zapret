@@ -66,14 +66,14 @@ uint16_t saport(const struct sockaddr *sa)
 
 uint64_t pntoh64(const void *p)
 {
-	return ((uint64_t)*((const uint8_t *)(p)+0)) << 56 |
-		((uint64_t)*((const uint8_t *)(p)+1)) << 48 |
-		((uint64_t)*((const uint8_t *)(p)+2)) << 40 |
-		((uint64_t)*((const uint8_t *)(p)+3)) << 32 |
-		((uint64_t)*((const uint8_t *)(p)+4)) << 24 |
-		((uint64_t)*((const uint8_t *)(p)+5)) << 16 |
-		((uint64_t)*((const uint8_t *)(p)+6)) << 8 |
-		((uint64_t)*((const uint8_t *)(p)+7)) << 0;
+	return (uint64_t)*((const uint8_t *)(p)+0) << 56 |
+		(uint64_t)*((const uint8_t *)(p)+1) << 48 |
+		(uint64_t)*((const uint8_t *)(p)+2) << 40 |
+		(uint64_t)*((const uint8_t *)(p)+3) << 32 |
+		(uint64_t)*((const uint8_t *)(p)+4) << 24 |
+		(uint64_t)*((const uint8_t *)(p)+5) << 16 |
+		(uint64_t)*((const uint8_t *)(p)+6) << 8 |
+		(uint64_t)*((const uint8_t *)(p)+7) << 0;
 }
 void phton64(uint8_t *p, uint64_t v)
 {
