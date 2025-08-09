@@ -108,8 +108,8 @@ static struct
 // get next domain. return 0 if failure
 static char interlocked_get_dom(char *dom, size_t size)
 {
-	char buffer[SIZE];
-	if (!fgets(buffer, size, stdin))
+	char buffer[256];
+	if (!fgets(buffer, sizeof(buffer), stdin))
 		return 0;
 	trimstr(buffer);
 
