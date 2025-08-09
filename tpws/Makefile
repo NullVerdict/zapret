@@ -7,7 +7,7 @@ LDFLAGS_ANDROID = -llog
 LIBS = -lz -lpthread
 LIBS_SYSTEMD = -lsystemd
 LIBS_ANDROID = -lz
-SRC_FILES = *.c ../shared/helpers_common.c ../shared/gzip.c ../shared/protocol_common.c
+SRC_FILES = *.c ../shared/helpers_common.c ../shared/gzip.c
 SRC_FILES_ANDROID = $(SRC_FILES) andr/*.c
 
 all: tpws
