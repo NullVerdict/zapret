@@ -1,13 +1,13 @@
 CC ?= cc
 OPTIMIZE ?= -Os
-CFLAGS += -std=gnu99 $(OPTIMIZE) -flto=auto
+CFLAGS += -std=gnu99 $(OPTIMIZE) -flto=auto -I../shared
 CFLAGS_SYSTEMD = -DUSE_SYSTEMD
 CFLAGS_BSD = -Wno-address-of-packed-member
 LDFLAGS_ANDROID = -llog
 LIBS = -lz -lpthread
 LIBS_SYSTEMD = -lsystemd
 LIBS_ANDROID = -lz
-SRC_FILES = *.c ../shared/helpers_common.c
+SRC_FILES = *.c ../shared/helpers_common.c ../shared/gzip.c
 SRC_FILES_ANDROID = $(SRC_FILES) andr/*.c
 
 all: tpws

@@ -1,6 +1,6 @@
 CC ?= cc
 OPTIMIZE ?= -Os
-CFLAGS += -std=gnu99 $(OPTIMIZE) -flto=auto
+CFLAGS += -std=gnu99 $(OPTIMIZE) -flto=auto -I../shared
 CFLAGS_SYSTEMD = -DUSE_SYSTEMD
 CFLAGS_BSD = -Wno-address-of-packed-member
 CFLAGS_CYGWIN = -Wno-address-of-packed-member -static
@@ -13,7 +13,7 @@ LIBS_CYGWIN32 = -lwindivert32
 LIBS_CYGWIN64 = -lwindivert64
 RES_CYGWIN32 = windows/res/32/winmanifest.o windows/res/32/winicon.o
 RES_CYGWIN64 = windows/res/64/winmanifest.o windows/res/64/winicon.o
-SRC_FILES = *.c crypto/*.c ../shared/helpers_common.c
+SRC_FILES = *.c crypto/*.c ../shared/helpers_common.c ../shared/gzip.c
 
 all: nfqws
 

@@ -9,7 +9,7 @@
 #include "protocol.h"
 #include "hostlist.h"
 #include "ipset.h"
-#include "gzip.h"
+#include "../shared/gzip.h"
 #include "pools.h"
 
 #include <stdio.h>

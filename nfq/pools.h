@@ -13,7 +13,7 @@
 #define HASH_FUNCTION HASH_BER
 #include "uthash.h"
 
-#include "kavl.h"
+#include "../shared/kavl.h"
 
 #define HOSTLIST_POOL_FLAG_STRICT_MATCH		1
 

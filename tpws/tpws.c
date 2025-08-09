@@ -44,7 +44,7 @@
 #include "sec.h"
 #include "redirect.h"
 #include "helpers.h"
-#include "gzip.h"
+#include "../shared/gzip.h"
 #include "pools.h"
 
 

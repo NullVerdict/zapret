@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "ipset.h"
-#include "gzip.h"
+#include "../shared/gzip.h"
 #include "helpers.h"
 
 

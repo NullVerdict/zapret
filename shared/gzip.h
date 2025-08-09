@@ -6,3 +6,5 @@
 
 int z_readfile(FILE *F,char **buf,size_t *size);
 bool is_gzip(FILE* F);
+
+

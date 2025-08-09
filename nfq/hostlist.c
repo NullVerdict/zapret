@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "hostlist.h"
-#include "gzip.h"
+#include "../shared/gzip.h"
 #include "helpers.h"
 
 // inplace tolower() and add to pool
