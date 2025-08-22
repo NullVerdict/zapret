@@ -1,4 +1,4 @@
-# zapret v71.3
+# zapret v71.4
 
 # SCAMMER WARNING
 
@@ -701,6 +701,9 @@ Set up bridge networking.
 
 ### IPTABLES for nfqws
 
+> [!CAUTION]
+> Starting from Linux kernel 6.17 there's CONFIG_NETFILTER_XTABLES_LEGACY parameter which is not set by default. Many distributions will likely not turn it on making iptables-legacy non working. This is part of iptables deprecation. However iptables-nft still works because their backend is based on nftables.
+
 This is the common way to redirect some traffic to nfqws :
 
 ```
@@ -1145,7 +1148,7 @@ If `MODE_FILTER=hostlist` all present lists are passed to **nfqws** or **tpws**.
 If all include lists are empty it works like no include lists exist at all.
 If you need "all except" mode you dont have to delete zapret-hosts-users.txt. Just make it empty.
 
-Subdomains auto apply. For example, "ru" in the list affects "*.ru" .
+Subdomains auto apply. For example, "ru" in the list affects "\*.ru" .
 `^` prefix symbol disables subdomain match.
 
 **tpws** and **nfqws** automatically reload lists if their modification time or file size is changed.
@@ -1243,7 +1246,7 @@ Change postnat scheme mark bit
 
 If uncommented pass to zapret only packets marked with this bit
 
-`#FILTER_MARK_POSTNAT=0x10000000`
+`#FILTER_MARK=0x10000000`
 
 Bit must be set in your own rules.
 * iptables - in mangle PREROUTING and mangle OUTPUT before zapret rules (iptables -I _after_ zapret rules application).
